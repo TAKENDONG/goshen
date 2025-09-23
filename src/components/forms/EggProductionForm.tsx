@@ -13,7 +13,9 @@ interface EggProductionFormProps {
 interface EggProductionData {
   flock_id: string;
   date: string;
-  eggs_produced: number;
+  trays_count: number;
+  individual_eggs: number;
+  broken_eggs: number;
   recorded_by: string;
 }
 
@@ -26,7 +28,9 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
   const [formData, setFormData] = useState<EggProductionData>({
     flock_id: '',
     date: new Date().toISOString().split('T')[0],
-    eggs_produced: 0,
+    trays_count: 0,
+    individual_eggs: 0,
+    broken_eggs: 0,
     recorded_by: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +61,7 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
       return;
     }
 
-    if (!formData.flock_id || formData.eggs_produced < 0) {
+    if (!formData.flock_id || formData.trays_count < 0 || formData.individual_eggs < 0 || formData.broken_eggs < 0) {
       alert('Veuillez remplir tous les champs correctement');
       return;
     }
@@ -68,7 +72,9 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
       const { error } = await insertProduction({
         flock_id: formData.flock_id,
         date: formData.date,
-        eggs_produced: formData.eggs_produced,
+        trays_count: formData.trays_count,
+        individual_eggs: formData.individual_eggs,
+        broken_eggs: formData.broken_eggs,
         recorded_by: user.id
       });
 
@@ -80,7 +86,9 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
       setFormData({
         flock_id: '',
         date: new Date().toISOString().split('T')[0],
-        eggs_produced: 0,
+        trays_count: 0,
+        individual_eggs: 0,
+        broken_eggs: 0,
         recorded_by: user.id
       });
 
@@ -98,9 +106,12 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'eggs_produced' ? parseInt(value) || 0 : value
+      [name]: ['trays_count', 'individual_eggs', 'broken_eggs'].includes(name) ? parseInt(value) || 0 : value
     }));
   };
+
+  // Calcul automatique du total d'œufs
+  const totalEggs = (formData.trays_count * 30) + formData.individual_eggs - formData.broken_eggs;
 
   return (
     <Modal
@@ -147,20 +158,65 @@ const EggProductionForm: React.FC<EggProductionFormProps> = ({
           />
         </div>
 
-        <div>
-          <label htmlFor="eggs_produced" className="block text-sm font-medium text-gray-700 mb-2">
-            Nombre d'œufs produits *
-          </label>
-          <input
-            type="number"
-            id="eggs_produced"
-            name="eggs_produced"
-            value={formData.eggs_produced}
-            onChange={handleInputChange}
-            min="0"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="trays_count" className="block text-sm font-medium text-gray-700 mb-2">
+              Nombre d'alvéoles
+            </label>
+            <input
+              type="number"
+              id="trays_count"
+              name="trays_count"
+              value={formData.trays_count}
+              onChange={handleInputChange}
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="0"
+            />
+            <p className="text-xs text-gray-500 mt-1">Plateaux de 30 œufs</p>
+          </div>
+
+          <div>
+            <label htmlFor="individual_eggs" className="block text-sm font-medium text-gray-700 mb-2">
+              Œufs individuels
+            </label>
+            <input
+              type="number"
+              id="individual_eggs"
+              name="individual_eggs"
+              value={formData.individual_eggs}
+              onChange={handleInputChange}
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="0"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="broken_eggs" className="block text-sm font-medium text-gray-700 mb-2">
+              Œufs cassés
+            </label>
+            <input
+              type="number"
+              id="broken_eggs"
+              name="broken_eggs"
+              value={formData.broken_eggs}
+              onChange={handleInputChange}
+              min="0"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">Total d'œufs utilisables:</span>
+            <span className="text-lg font-bold text-green-600">{totalEggs} œufs</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            ({formData.trays_count} × 30) + {formData.individual_eggs} - {formData.broken_eggs} = {totalEggs}
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

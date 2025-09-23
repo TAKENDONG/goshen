@@ -32,7 +32,10 @@ export interface EggProduction {
   id: string;
   flock_id: string;
   date: string;
-  eggs_produced: number;
+  trays_count: number;
+  individual_eggs: number;
+  broken_eggs: number;
+  eggs_produced: number; // Calculé automatiquement par la DB
   recorded_by: string;
   created_at: string;
 }

@@ -44,7 +44,10 @@ CREATE TABLE IF NOT EXISTS egg_productions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   flock_id UUID REFERENCES flocks(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL,
-  eggs_produced INTEGER NOT NULL DEFAULT 0,
+  trays_count INTEGER NOT NULL DEFAULT 0, -- Nombre d'alvéoles (plateaux de 30)
+  individual_eggs INTEGER NOT NULL DEFAULT 0, -- Œufs individuels
+  broken_eggs INTEGER NOT NULL DEFAULT 0, -- Œufs cassés
+  eggs_produced INTEGER GENERATED ALWAYS AS ((trays_count * 30) + individual_eggs - broken_eggs) STORED, -- Total calculé
   recorded_by UUID REFERENCES profiles(id) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
