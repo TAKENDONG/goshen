@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-r
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
 const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || supabaseUrl === 'https://your-project-ref.supabase.co') {
+if (!supabaseUrl || supabaseUrl === 'https://your.supabase.co') {
   console.warn('Please configure your Supabase URL in the .env file');
 }
 
