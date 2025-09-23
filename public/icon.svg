@@ -1,0 +1,38 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#16A34A"/>
+  
+  <!-- Farm/Chicken Icon -->
+  <g transform="translate(96, 96)">
+    <!-- Barn/House shape -->
+    <path d="M160 80 L240 40 L320 80 L320 240 L160 240 Z" fill="#FFFFFF" opacity="0.9"/>
+    <path d="M160 80 L240 40 L320 80 L300 90 L240 60 L180 90 Z" fill="#FFFFFF" opacity="0.7"/>
+    
+    <!-- Door -->
+    <rect x="220" y="180" width="40" height="60" fill="#16A34A"/>
+    
+    <!-- Window -->
+    <circle cx="200" cy="140" r="15" fill="#16A34A"/>
+    <circle cx="280" cy="140" r="15" fill="#16A34A"/>
+    
+    <!-- Chicken silhouette -->
+    <g transform="translate(60, 200)">
+      <ellipse cx="30" cy="20" rx="25" ry="15" fill="#FFFFFF"/>
+      <ellipse cx="15" cy="10" rx="12" ry="8" fill="#FFFFFF"/>
+      <polygon points="5,8 0,12 8,12" fill="#FEF3C7"/>
+      <circle cx="12" cy="8" r="2" fill="#1F2937"/>
+    </g>
+    
+    <!-- Another chicken -->
+    <g transform="translate(280, 190)">
+      <ellipse cx="30" cy="20" rx="20" ry="12" fill="#FFFFFF"/>
+      <ellipse cx="18" cy="12" rx="10" ry="6" fill="#FFFFFF"/>
+      <polygon points="8,10 3,14 11,14" fill="#FEF3C7"/>
+      <circle cx="15" cy="10" r="1.5" fill="#1F2937"/>
+    </g>
+  </g>
+  
+  <!-- App Name -->
+  <text x="256" y="420" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="36" font-weight="bold">GOSHEN</text>
+  <text x="256" y="450" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="20" opacity="0.8">FERME</text>
+</svg>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        canvas { border: 1px solid #ccc; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h2>PWA Icon Generator</h2>
+    <p>Right-click on each canvas and "Save image as" to download the PNG files:</p>
+    
+    <div>
+        <h3>192x192 Icon</h3>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+    </div>
+    
+    <div>
+        <h3>512x512 Icon</h3>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 512;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background with rounded corners
+            ctx.fillStyle = '#16A34A';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, 64 * scale);
+            ctx.fill();
+            
+            // Scale transformations
+            ctx.save();
+            ctx.scale(scale, scale);
+            
+            // Barn/House
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.moveTo(160, 80);
+            ctx.lineTo(240, 40);
+            ctx.lineTo(320, 80);
+            ctx.lineTo(320, 240);
+            ctx.lineTo(160, 240);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Roof
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            ctx.moveTo(160, 80);
+            ctx.lineTo(240, 40);
+            ctx.lineTo(320, 80);
+            ctx.lineTo(300, 90);
+            ctx.lineTo(240, 60);
+            ctx.lineTo(180, 90);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Door
+            ctx.fillStyle = '#16A34A';
+            ctx.fillRect(220, 180, 40, 60);
+            
+            // Windows
+            ctx.fillStyle = '#16A34A';
+            ctx.beginPath();
+            ctx.arc(200, 140, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(280, 140, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Chicken 1
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(90, 220, 25, 15, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(75, 210, 12, 8, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Chicken beak
+            ctx.fillStyle = '#FEF3C7';
+            ctx.beginPath();
+            ctx.moveTo(65, 208);
+            ctx.lineTo(60, 212);
+            ctx.lineTo(68, 212);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Chicken eye
+            ctx.fillStyle = '#1F2937';
+            ctx.beginPath();
+            ctx.arc(72, 208, 2, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Chicken 2
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.ellipse(310, 210, 20, 12, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(298, 202, 10, 6, 0, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Chicken 2 beak
+            ctx.fillStyle = '#FEF3C7';
+            ctx.beginPath();
+            ctx.moveTo(288, 200);
+            ctx.lineTo(283, 204);
+            ctx.lineTo(291, 204);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Chicken 2 eye
+            ctx.fillStyle = '#1F2937';
+            ctx.beginPath();
+            ctx.arc(295, 200, 1.5, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('GOSHEN', 256, 420);
+            
+            ctx.font = '20px Arial';
+            ctx.globalAlpha = 0.8;
+            ctx.fillText('FERME', 256, 450);
+            
+            ctx.restore();
+        }
+        
+        // Create rounded rectangle method if not available
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+        
+        // Generate icons
+        drawIcon(document.getElementById('canvas192'), 192);
+        drawIcon(document.getElementById('canvas512'), 512);
+        
+        // Add click handlers to download images
+        document.getElementById('canvas192').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'icon-192.png';
+            link.href = this.toDataURL();
+            link.click();
+        });
+        
+        document.getElementById('canvas512').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.download = 'icon-512.png';
+            link.href = this.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
