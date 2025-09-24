@@ -11,10 +11,12 @@ import {
 import { useSupabaseData } from '../../hooks/useSupabaseData';
 import { EggSale, Transaction } from '../../types';
 import EggSalesForm from '../forms/EggSalesForm';
+import TransactionForm from '../forms/TransactionForm';
 
 const SalesModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState('sales');
   const [showSalesForm, setShowSalesForm] = useState(false);
+  const [showTransactionForm, setShowTransactionForm] = useState(false);
 
   // Real data from Supabase
   const {
@@ -36,32 +38,47 @@ const SalesModule: React.FC = () => {
   const todayTrays = todaySales.reduce((sum, sale) => sum + sale.trays_count, 0);
   const averagePrice = todayTrays > 0 ? todayTotal / todayTrays : 0;
 
-  // Calculate monthly totals
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Calculate weekly totals (Monday to Sunday)
+  const getStartOfWeek = (date: Date) => {
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(date.setDate(diff));
+  };
 
-  const monthlyIncome = transactions
+  const getEndOfWeek = (date: Date) => {
+    const startOfWeek = getStartOfWeek(new Date(date));
+    return new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000);
+  };
+
+  const startOfWeek = getStartOfWeek(new Date());
+  const endOfWeek = getEndOfWeek(new Date());
+
+  const weeklyIncome = transactions
     .filter(t => {
       const transactionDate = new Date(t.date);
       return t.type === 'income' &&
-             transactionDate.getMonth() === currentMonth &&
-             transactionDate.getFullYear() === currentYear;
+             transactionDate >= startOfWeek &&
+             transactionDate <= endOfWeek;
     })
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const monthlyExpenses = Math.abs(transactions
+  const weeklyExpenses = Math.abs(transactions
     .filter(t => {
       const transactionDate = new Date(t.date);
       return t.type === 'expense' &&
-             transactionDate.getMonth() === currentMonth &&
-             transactionDate.getFullYear() === currentYear;
+             transactionDate >= startOfWeek &&
+             transactionDate <= endOfWeek;
     })
     .reduce((sum, t) => sum + Math.abs(t.amount), 0));
 
-  const monthlyBalance = monthlyIncome - monthlyExpenses;
+  const weeklyBalance = weeklyIncome - weeklyExpenses;
 
   const handleSalesSuccess = () => {
     refetchSales();
+    refetchTransactions();
+  };
+
+  const handleTransactionSuccess = () => {
     refetchTransactions();
   };
 
@@ -178,8 +195,8 @@ const SalesModule: React.FC = () => {
               <ArrowUpCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">Entrées du mois</p>
-              <p className="text-2xl font-bold text-green-600">{monthlyIncome.toLocaleString()} CFA</p>
+              <p className="text-sm text-gray-600">Entrées de la semaine</p>
+              <p className="text-2xl font-bold text-green-600">{weeklyIncome.toLocaleString()} CFA</p>
             </div>
           </div>
         </div>
@@ -190,8 +207,8 @@ const SalesModule: React.FC = () => {
               <ArrowDownCircle className="h-6 w-6 text-red-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">Sorties du mois</p>
-              <p className="text-2xl font-bold text-red-600">{monthlyExpenses.toLocaleString()} CFA</p>
+              <p className="text-sm text-gray-600">Sorties de la semaine</p>
+              <p className="text-2xl font-bold text-red-600">{weeklyExpenses.toLocaleString()} CFA</p>
             </div>
           </div>
         </div>
@@ -203,7 +220,7 @@ const SalesModule: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-gray-600">Balance</p>
-              <p className={`text-2xl font-bold ${monthlyBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{monthlyBalance.toLocaleString()} CFA</p>
+              <p className={`text-2xl font-bold ${weeklyBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>{weeklyBalance.toLocaleString()} CFA</p>
             </div>
           </div>
         </div>
@@ -213,7 +230,10 @@ const SalesModule: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Transactions Récentes</h3>
-          <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <button
+            onClick={() => setShowTransactionForm(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Transaction
           </button>
@@ -258,15 +278,21 @@ const SalesModule: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Rapports Financiers</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+            <Receipt className="h-6 w-6 text-green-600 mb-2" />
+            <h4 className="font-medium text-gray-800">Rapport Hebdomadaire</h4>
+            <p className="text-sm text-gray-600">Du lundi au dimanche</p>
+          </button>
+
           <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
             <PieChart className="h-6 w-6 text-blue-600 mb-2" />
             <h4 className="font-medium text-gray-800">Rapport Mensuel</h4>
             <p className="text-sm text-gray-600">Bilan complet du mois</p>
           </button>
-          
+
           <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-            <TrendingUp className="h-6 w-6 text-green-600 mb-2" />
+            <TrendingUp className="h-6 w-6 text-amber-600 mb-2" />
             <h4 className="font-medium text-gray-800">Évolution des Ventes</h4>
             <p className="text-sm text-gray-600">Graphique des tendances</p>
           </button>
@@ -292,21 +318,21 @@ const SalesModule: React.FC = () => {
     <div className="space-y-6">
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-        <nav className="flex space-x-2">
+        <nav className="flex overflow-x-auto space-x-2 pb-2 md:pb-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-3 rounded-lg font-medium text-sm transition-colors ${
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg font-medium text-xs min-w-fit whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <Icon className="h-4 w-4 mb-1" />
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -321,6 +347,13 @@ const SalesModule: React.FC = () => {
         isOpen={showSalesForm}
         onClose={() => setShowSalesForm(false)}
         onSuccess={handleSalesSuccess}
+      />
+
+      {/* Transaction Form Modal */}
+      <TransactionForm
+        isOpen={showTransactionForm}
+        onClose={() => setShowTransactionForm(false)}
+        onSuccess={handleTransactionSuccess}
       />
     </div>
   );

@@ -42,6 +42,10 @@ const MortalityForm: React.FC<MortalityFormProps> = ({
     insert: insertMortality
   } = useSupabaseData<Mortality>('mortalities');
 
+  const {
+    update: updateFlock
+  } = useSupabaseData<Flock>('flocks');
+
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
@@ -67,7 +71,20 @@ const MortalityForm: React.FC<MortalityFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const { error } = await insertMortality({
+      // Find the selected flock to get current count
+      const selectedFlock = flocks.find(flock => flock.id === formData.flock_id);
+      if (!selectedFlock) {
+        throw new Error('Troupeau non trouvé');
+      }
+
+      // Check if deaths exceed current count
+      if (formData.deaths > selectedFlock.current_count) {
+        alert(`Le nombre de morts (${formData.deaths}) ne peut pas dépasser l'effectif actuel (${selectedFlock.current_count})`);
+        return;
+      }
+
+      // Insert mortality record
+      const { error: mortalityError } = await insertMortality({
         flock_id: formData.flock_id,
         date: formData.date,
         deaths: formData.deaths,
@@ -75,8 +92,18 @@ const MortalityForm: React.FC<MortalityFormProps> = ({
         recorded_by: user.id
       });
 
-      if (error) {
-        throw new Error(error);
+      if (mortalityError) {
+        throw new Error(mortalityError);
+      }
+
+      // Update flock current count (decrement by deaths)
+      const newCurrentCount = selectedFlock.current_count - formData.deaths;
+      const { error: updateError } = await updateFlock(formData.flock_id, {
+        current_count: newCurrentCount
+      });
+
+      if (updateError) {
+        throw new Error(updateError);
       }
 
       // Reset form

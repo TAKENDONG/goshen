@@ -127,3 +127,32 @@ export interface FeedSale {
   recorded_by: string;
   created_at: string;
 }
+
+export interface RawMaterial {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+  current_stock: number;
+  unit_price: number;
+  supplier?: string;
+  minimum_stock?: number;
+  maximum_stock?: number;
+  created_at: string;
+}
+
+export interface FeedEntry {
+  id: string;
+  material_id: string;
+  entry_type: 'purchase' | 'adjustment' | 'transfer';
+  quantity: number;
+  unit_price: number;
+  total_amount: number;
+  supplier: string;
+  delivery_date: string;
+  batch_number?: string;
+  expiry_date?: string;
+  notes?: string;
+  recorded_by: string;
+  created_at: string;
+}

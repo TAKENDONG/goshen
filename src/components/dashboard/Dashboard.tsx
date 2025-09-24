@@ -1,8 +1,8 @@
-import React from 'react';
-import { 
-  Egg, 
-  TrendingUp, 
-  DollarSign, 
+import React, { useState } from 'react';
+import {
+  Egg,
+  TrendingUp,
+  DollarSign,
   Truck,
   AlertTriangle,
   Calendar,
@@ -10,16 +10,48 @@ import {
   Wheat
 } from 'lucide-react';
 import MetricCard from './MetricCard';
+import MetricHistory from './MetricHistory';
 
 const Dashboard: React.FC = () => {
+  const [historyModal, setHistoryModal] = useState<{
+    isOpen: boolean;
+    metricType: 'production' | 'mortality' | 'feeding' | 'sales' | null;
+    title: string;
+  }>({
+    isOpen: false,
+    metricType: null,
+    title: ''
+  });
+
   // Mock data - will be replaced with real data from Supabase
   const mockData = {
-    totalEggs: 4250,
+    production: {
+      trays: 142,
+      individual: 10,
+      broken: 12,
+      total: 4250 // (142 * 30) + 10 - 12 = 4258
+    },
     dailyProduction: 85.2,
     mortality: 12,
     dailyRevenue: 2840,
     feedStock: 2.5,
     pendingVaccinations: 2,
+  };
+
+  const openHistory = (metricType: 'production' | 'mortality' | 'feeding' | 'sales', title: string) => {
+    setHistoryModal({
+      isOpen: true,
+      metricType,
+      title
+    });
+  };
+
+  const closeHistory = () => {
+    setHistoryModal({
+      isOpen: false,
+      metricType: null,
+      title: ''
+    });
   };
 
   return (
@@ -37,14 +69,16 @@ const Dashboard: React.FC = () => {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricCard
-          title="Œufs produits aujourd'hui"
-          value={mockData.totalEggs}
-          subtitle={`Taux: ${mockData.dailyProduction}%`}
+          title="Production d'œufs aujourd'hui"
+          value={`${mockData.production.trays} alvéoles`}
+          subtitle={`${mockData.production.individual} individuels • ${mockData.production.broken} cassés • Total: ${mockData.production.total}`}
           icon={Egg}
           color="green"
           trend={{ value: 3.2, isPositive: true }}
+          onClick={() => openHistory('production', 'Production d\'œufs')}
+          metricType="production"
         />
-        
+
         <MetricCard
           title="Recettes du jour"
           value={`${mockData.dailyRevenue.toLocaleString()} CFA`}
@@ -52,6 +86,8 @@ const Dashboard: React.FC = () => {
           icon={DollarSign}
           color="blue"
           trend={{ value: 5.8, isPositive: true }}
+          onClick={() => openHistory('sales', 'Recettes')}
+          metricType="sales"
         />
 
         <MetricCard
@@ -61,6 +97,8 @@ const Dashboard: React.FC = () => {
           icon={AlertTriangle}
           color="red"
           trend={{ value: -1.2, isPositive: true }}
+          onClick={() => openHistory('mortality', 'Mortalité')}
+          metricType="mortality"
         />
 
         <MetricCard
@@ -69,6 +107,8 @@ const Dashboard: React.FC = () => {
           subtitle="Jours restants: 3"
           icon={Wheat}
           color="amber"
+          onClick={() => openHistory('feeding', 'Consommation d\'aliment')}
+          metricType="feeding"
         />
 
         <MetricCard
@@ -88,34 +128,8 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
-            Saisies Rapides
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
-              <Egg className="h-6 w-6 mx-auto mb-1 text-green-600" />
-              <span className="text-sm font-medium">Ponte</span>
-            </button>
-            <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
-              <AlertTriangle className="h-6 w-6 mx-auto mb-1 text-red-600" />
-              <span className="text-sm font-medium">Mortalité</span>
-            </button>
-            <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
-              <DollarSign className="h-6 w-6 mx-auto mb-1 text-blue-600" />
-              <span className="text-sm font-medium">Vente</span>
-            </button>
-            <button className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center">
-              <Truck className="h-6 w-6 mx-auto mb-1 text-purple-600" />
-              <span className="text-sm font-medium">Livraison</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      {/* Alerts & Reminders */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-blue-600" />
             Alertes & Rappels
@@ -141,7 +155,14 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+
+      {/* Metric History Modal */}
+      <MetricHistory
+        isOpen={historyModal.isOpen}
+        onClose={closeHistory}
+        metricType={historyModal.metricType}
+        title={historyModal.title}
+      />
     </div>
   );
 };

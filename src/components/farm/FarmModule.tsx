@@ -13,13 +13,17 @@ import EggProductionForm from '../forms/EggProductionForm';
 import MortalityForm from '../forms/MortalityForm';
 import FeedConsumptionForm from '../forms/FeedConsumptionForm';
 import VaccinationForm from '../forms/VaccinationForm';
+import FlockForm from '../forms/FlockForm';
+import FeedStockForm from '../forms/FeedStockForm';
 
 const FarmModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('production');
+  const [activeTab, setActiveTab] = useState('flocks');
+  const [showFlockForm, setShowFlockForm] = useState(false);
   const [showProductionForm, setShowProductionForm] = useState(false);
   const [showMortalityForm, setShowMortalityForm] = useState(false);
   const [showFeedForm, setShowFeedForm] = useState(false);
   const [showVaccinationForm, setShowVaccinationForm] = useState(false);
+  const [showFeedStockForm, setShowFeedStockForm] = useState(false);
 
   // Define the type for a flock
   type Flock = {
@@ -81,7 +85,8 @@ const FarmModule: React.FC = () => {
   `);
 
   const tabs = [
-    { id: 'production', label: 'Production d\'œufs', icon: Egg },
+    { id: 'flocks', label: 'Bandes', icon: Bird },
+    { id: 'production', label: 'Production', icon: Egg },
     { id: 'mortality', label: 'Mortalité', icon: AlertTriangle },
     { id: 'feeding', label: 'Alimentation', icon: Wheat },
     { id: 'health', label: 'Prophylaxie', icon: Syringe },
@@ -154,6 +159,103 @@ const FarmModule: React.FC = () => {
     refetchVaccinations();
     refetchFlocks();
   };
+
+  const handleFlockSuccess = () => {
+    refetchFlocks();
+  };
+
+  const handleFeedStockSuccess = () => {
+    // Refresh any feed stock related data if needed
+    console.log('Feed stock added successfully');
+  };
+
+  const renderFlocksTab = () => (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Gestion des Bandes</h3>
+          <button
+            onClick={() => setShowFlockForm(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle Bande
+          </button>
+        </div>
+
+        {flocksLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Chargement des bandes...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(flocks ?? []).map((flock) => {
+              const occupancyRate = ((flock.current_count / flock.capacity) * 100).toFixed(1);
+              const production = getFlockProduction(flock.id);
+              const layingRate = flock.current_count > 0 ? (production / flock.current_count * 100).toFixed(1) : '0.0';
+
+              return (
+                <div key={flock.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-gray-800">{flock.name}</h4>
+                    <Bird className="h-6 w-6 text-blue-600" />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Effectif actuel:</span>
+                      <span className="font-semibold text-gray-900">{flock.current_count}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Capacité totale:</span>
+                      <span className="font-semibold text-gray-900">{flock.capacity}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Taux d'occupation:</span>
+                      <span className={`font-semibold ${
+                        parseFloat(occupancyRate) > 90 ? 'text-red-600' :
+                        parseFloat(occupancyRate) > 70 ? 'text-amber-600' : 'text-green-600'
+                      }`}>
+                        {occupancyRate}%
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Production aujourd'hui:</span>
+                      <span className="font-semibold text-green-600">{production} œufs</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Taux de ponte:</span>
+                      <span className="font-semibold text-blue-600">{layingRate}%</span>
+                    </div>
+
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ width: `${Math.min(parseFloat(occupancyRate), 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      Modifier
+                    </button>
+                    <button className="text-sm text-gray-600 hover:text-gray-800 font-medium">
+                      Détails
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   const renderProductionTab = () => (
     <div className="space-y-6">
@@ -277,13 +379,22 @@ const FarmModule: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Consommation Alimentaire</h3>
-          <button
-            onClick={() => setShowFeedForm(true)}
-            className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Saisir Distribution
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowFeedStockForm(true)}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau Stock
+            </button>
+            <button
+              onClick={() => setShowFeedForm(true)}
+              className="flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Saisir Distribution
+            </button>
+          </div>
         </div>
         
         {flocksLoading ? (
@@ -409,6 +520,8 @@ const FarmModule: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'flocks':
+        return renderFlocksTab();
       case 'production':
         return renderProductionTab();
       case 'mortality':
@@ -418,7 +531,7 @@ const FarmModule: React.FC = () => {
       case 'health':
         return renderHealthTab();
       default:
-        return renderProductionTab();
+        return renderFlocksTab();
     }
   };
 
@@ -426,21 +539,21 @@ const FarmModule: React.FC = () => {
     <div className="space-y-6">
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
-        <nav className="flex space-x-2">
+        <nav className="flex overflow-x-auto space-x-2 pb-2 md:pb-0">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-3 rounded-lg font-medium text-sm transition-colors ${
+                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg font-medium text-xs min-w-fit whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'bg-green-100 text-green-700'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <Icon className="h-4 w-4 mb-1" />
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -476,6 +589,20 @@ const FarmModule: React.FC = () => {
         isOpen={showVaccinationForm}
         onClose={() => setShowVaccinationForm(false)}
         onSuccess={handleVaccinationSuccess}
+      />
+
+      {/* Flock Form Modal */}
+      <FlockForm
+        isOpen={showFlockForm}
+        onClose={() => setShowFlockForm(false)}
+        onSuccess={handleFlockSuccess}
+      />
+
+      {/* Feed Stock Form Modal */}
+      <FeedStockForm
+        isOpen={showFeedStockForm}
+        onClose={() => setShowFeedStockForm(false)}
+        onSuccess={handleFeedStockSuccess}
       />
     </div>
   );
