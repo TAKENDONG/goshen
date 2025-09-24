@@ -14,9 +14,9 @@ export default defineConfig({
         skipWaiting: true
       },
       manifest: {
-        name: 'Ferme Coopérative - Gestion Avicole',
-        short_name: 'FermeApp',
-        description: 'PWA de gestion de ferme avicole et provenderie',
+        name: 'Goshen Farms - Gestion Centralisée',
+        short_name: 'GoshenApp',
+        description: 'PWA de gestion de la ferme et provenderie',
         theme_color: '#16A34A',
         background_color: '#F9FAFB',
         display: 'standalone',

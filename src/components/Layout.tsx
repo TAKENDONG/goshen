@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Menu,
-  X,
   Home,
   Bird,
   DollarSign,
@@ -20,7 +18,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageChange }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { appUser, signOut } = useAuth();
 
@@ -32,7 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageChange }) 
     { id: 'reports', name: 'Rapports', icon: BarChart3 },
   ];
 
-  if (appUser?.role === 'admin') {
+  if (appUser?.role === 'superadmin') {
     menuItems.push({ id: 'users', name: 'Utilisateurs', icon: Users });
   }
 
@@ -49,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage, onPageChange }) 
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-50 w-64 bg-green-800">
         <div className="flex items-center justify-center p-4 border-b border-green-700">
-          <h1 className="text-xl font-bold text-white">Ferme Coopérative</h1>
+          <h1 className="text-xl font-bold text-white">Goshen Farms</h1>
         </div>
 
         <nav className="mt-8">

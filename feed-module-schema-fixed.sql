@@ -1,5 +1,12 @@
--- Schema complet pour le module Provenderie
+-- Schema complet pour le module Provenderie - Version corrigée
 -- À exécuter dans l'éditeur SQL de Supabase
+
+-- D'abord, supprimer les tables existantes si elles posent problème (optionnel)
+-- DROP TABLE IF EXISTS feed_sales CASCADE;
+-- DROP TABLE IF EXISTS machine_revenues CASCADE;
+-- DROP TABLE IF EXISTS mill_revenues CASCADE;
+-- DROP TABLE IF EXISTS feed_entries CASCADE;
+-- DROP TABLE IF EXISTS raw_materials CASCADE;
 
 -- 1. Table des matières premières (raw_materials)
 CREATE TABLE IF NOT EXISTS raw_materials (
@@ -72,16 +79,7 @@ CREATE TABLE IF NOT EXISTS feed_sales (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. Indexes pour les performances
-CREATE INDEX IF NOT EXISTS idx_feed_entries_date ON feed_entries(delivery_date);
-CREATE INDEX IF NOT EXISTS idx_feed_entries_material ON feed_entries(material_id);
-CREATE INDEX IF NOT EXISTS idx_raw_materials_category ON raw_materials(category);
-CREATE INDEX IF NOT EXISTS idx_mill_revenues_date ON mill_revenues(date);
-CREATE INDEX IF NOT EXISTS idx_machine_revenues_date ON machine_revenues(date);
-CREATE INDEX IF NOT EXISTS idx_feed_sales_date ON feed_sales(date);
-CREATE INDEX IF NOT EXISTS idx_feed_sales_delivery_date ON feed_sales(delivery_date);
-
--- 7. Triggers pour updated_at
+-- 6. Fonction pour updated_at (à créer avant les triggers)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -90,34 +88,74 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- 7. Trigger pour updated_at sur raw_materials
+DROP TRIGGER IF EXISTS update_raw_materials_updated_at ON raw_materials;
 CREATE TRIGGER update_raw_materials_updated_at
 BEFORE UPDATE ON raw_materials
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 8. RLS (Row Level Security) pour toutes les tables
+-- 8. Création des indexes après confirmation que les tables existent
+DO $$
+BEGIN
+    -- Vérifier si les colonnes existent avant de créer les indexes
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'feed_entries' AND column_name = 'delivery_date') THEN
+        CREATE INDEX IF NOT EXISTS idx_feed_entries_date ON feed_entries(delivery_date);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'feed_entries' AND column_name = 'material_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_feed_entries_material ON feed_entries(material_id);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'raw_materials' AND column_name = 'category') THEN
+        CREATE INDEX IF NOT EXISTS idx_raw_materials_category ON raw_materials(category);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'mill_revenues' AND column_name = 'date') THEN
+        CREATE INDEX IF NOT EXISTS idx_mill_revenues_date ON mill_revenues(date);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'machine_revenues' AND column_name = 'date') THEN
+        CREATE INDEX IF NOT EXISTS idx_machine_revenues_date ON machine_revenues(date);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'feed_sales' AND column_name = 'date') THEN
+        CREATE INDEX IF NOT EXISTS idx_feed_sales_date ON feed_sales(date);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'feed_sales' AND column_name = 'delivery_date') THEN
+        CREATE INDEX IF NOT EXISTS idx_feed_sales_delivery_date ON feed_sales(delivery_date);
+    END IF;
+END $$;
+
+-- 9. RLS (Row Level Security) pour toutes les tables
 ALTER TABLE raw_materials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feed_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mill_revenues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE machine_revenues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feed_sales ENABLE ROW LEVEL SECURITY;
 
--- Politiques pour permettre l'accès aux utilisateurs authentifiés
+-- 10. Politiques RLS pour permettre l'accès aux utilisateurs authentifiés
+DROP POLICY IF EXISTS "Allow all operations for authenticated users" ON raw_materials;
 CREATE POLICY "Allow all operations for authenticated users" ON raw_materials
     FOR ALL USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow all operations for authenticated users" ON feed_entries;
 CREATE POLICY "Allow all operations for authenticated users" ON feed_entries
     FOR ALL USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow all operations for authenticated users" ON mill_revenues;
 CREATE POLICY "Allow all operations for authenticated users" ON mill_revenues
     FOR ALL USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow all operations for authenticated users" ON machine_revenues;
 CREATE POLICY "Allow all operations for authenticated users" ON machine_revenues
     FOR ALL USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow all operations for authenticated users" ON feed_sales;
 CREATE POLICY "Allow all operations for authenticated users" ON feed_sales
     FOR ALL USING (auth.role() = 'authenticated');
 
--- 9. Vérification finale
+-- 11. Vérification finale
 SELECT
   table_name,
   (SELECT count(*) FROM information_schema.columns WHERE table_name = t.table_name) as column_count

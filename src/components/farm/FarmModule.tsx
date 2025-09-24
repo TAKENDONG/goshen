@@ -6,7 +6,7 @@ import {
   Wheat,
   Syringe,
   Plus,
-  TrendingUp
+  BarChart3
 } from 'lucide-react';
 import { useSupabaseData } from '../../hooks/useSupabaseData';
 import EggProductionForm from '../forms/EggProductionForm';
@@ -15,6 +15,9 @@ import FeedConsumptionForm from '../forms/FeedConsumptionForm';
 import VaccinationForm from '../forms/VaccinationForm';
 import FlockForm from '../forms/FlockForm';
 import FeedStockForm from '../forms/FeedStockForm';
+import FlockAnalytics from '../charts/FlockAnalytics';
+import ProductionChart from '../charts/ProductionChart';
+import MortalityChart from '../charts/MortalityChart';
 
 const FarmModule: React.FC = () => {
   const [activeTab, setActiveTab] = useState('flocks');
@@ -90,6 +93,7 @@ const FarmModule: React.FC = () => {
     { id: 'mortality', label: 'Mortalité', icon: AlertTriangle },
     { id: 'feeding', label: 'Alimentation', icon: Wheat },
     { id: 'health', label: 'Prophylaxie', icon: Syringe },
+    { id: 'analytics', label: 'Analyses', icon: BarChart3 },
   ];
 
   // Define the type for egg production
@@ -308,16 +312,8 @@ const FarmModule: React.FC = () => {
         )}
       </div>
 
-      {/* Chart placeholder */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center mb-4">
-          <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-800">Évolution de la Production</h3>
-        </div>
-        <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-          <p className="text-gray-500">Graphique de production - À implémenter</p>
-        </div>
-      </div>
+      {/* Production Chart */}
+      <ProductionChart timeRange="30d" />
     </div>
   );
 
@@ -371,6 +367,9 @@ const FarmModule: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Mortality Chart */}
+      <MortalityChart timeRange="30d" />
     </div>
   );
 
@@ -450,7 +449,7 @@ const FarmModule: React.FC = () => {
             Programmer Vaccin
           </button>
         </div>
-        
+
         {vaccinationsLoading ? (
           <div className="text-center py-8">
             <p className="text-gray-500">Chargement des vaccinations...</p>
@@ -518,6 +517,10 @@ const FarmModule: React.FC = () => {
     </div>
   );
 
+  const renderAnalyticsTab = () => (
+    <FlockAnalytics />
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'flocks':
@@ -530,6 +533,8 @@ const FarmModule: React.FC = () => {
         return renderFeedingTab();
       case 'health':
         return renderHealthTab();
+      case 'analytics':
+        return renderAnalyticsTab();
       default:
         return renderFlocksTab();
     }

@@ -34,7 +34,7 @@ const LoginForm: React.FC = () => {
           <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
             <Bird className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Ferme Coopérative</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Goshen Farms</h1>
           <p className="text-gray-600 mt-2">Gestion Avicole & Provenderie</p>
         </div>
 

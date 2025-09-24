@@ -17,8 +17,11 @@ import NewMaterialForm from '../forms/NewMaterialForm';
 import FeedSalesForm from '../forms/FeedSalesForm';
 import MillRevenueForm from '../forms/MillRevenueForm';
 import MachineRevenueForm from '../forms/MachineRevenueForm';
+import RoleBasedAccess, { FeedManagerOnly, NotEmployee } from '../common/RoleBasedAccess';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const FeedModule: React.FC = () => {
+  const { canManageFeed, canViewFinancials, isEmployee, userRole } = usePermissions();
   const [activeTab, setActiveTab] = useState('stock');
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [showNewMaterialForm, setShowNewMaterialForm] = useState(false);
@@ -28,12 +31,18 @@ const FeedModule: React.FC = () => {
   const [showMillRevenueForm, setShowMillRevenueForm] = useState(false);
   const [showMachineRevenueForm, setShowMachineRevenueForm] = useState(false);
 
-  const tabs = [
-    { id: 'stock', label: 'Stock Mat. Premières', icon: Package },
-    { id: 'entries', label: 'Entrées', icon: ArrowDown },
-    { id: 'production', label: 'Production', icon: Factory },
-    { id: 'sales', label: 'Ventes Externes', icon: Truck },
+  // All available tabs with permission requirements
+  const allTabs = [
+    { id: 'stock', label: 'Stock Mat. Premières', icon: Package, roles: ['superadmin', 'feed_manager'] },
+    { id: 'entries', label: 'Entrées', icon: ArrowDown, roles: ['superadmin', 'feed_manager'] },
+    { id: 'production', label: 'Production', icon: Factory, roles: ['superadmin', 'feed_manager'] },
+    { id: 'sales', label: 'Ventes Externes', icon: Truck, roles: ['superadmin', 'feed_manager'] },
   ];
+
+  // Filter tabs based on user permissions
+  const tabs = allTabs.filter(tab =>
+    tab.roles.includes(userRole) || canManageFeed()
+  );
 
   // Real data from Supabase
   const {
@@ -60,16 +69,17 @@ const FeedModule: React.FC = () => {
     refetch: refetchMachineRevenues
   } = useSupabaseData<any>('machine_revenues', 'id, date, quantity, amount');
 
+  const {
+    data: feedSales,
+    loading: feedSalesLoading,
+    refetch: refetchFeedSales
+  } = useSupabaseData<any>('feed_sales', 'id, date, client_name, feed_type, quantity_kg, unit_price, total_amount');
+
   // Mock data for sections not yet implemented in database
   const productions = [
     { id: 1, date: '2025-01-13', type: 'Aliment Ponte Standard', quantity: 500, cost: 185000 },
     { id: 2, date: '2025-01-12', type: 'Aliment Poussin', quantity: 200, cost: 85000 },
     { id: 3, date: '2025-01-11', type: 'Aliment Ponte Enrichi', quantity: 300, cost: 145000 },
-  ];
-
-  const feedSales = [
-    { id: 1, date: '2025-01-13', client: 'Ferme Diallo', type: 'Ponte Standard', quantity: 250, price: 400, total: 100000 },
-    { id: 2, date: '2025-01-12', client: 'Élevage Moderne', type: 'Poussin', quantity: 150, price: 450, total: 67500 },
   ];
 
   const handleEntrySuccess = () => {
@@ -82,8 +92,7 @@ const FeedModule: React.FC = () => {
   };
 
   const handleFeedSaleSuccess = () => {
-    // Refresh feed sales data when table is implemented
-    console.log('Feed sale recorded successfully');
+    refetchFeedSales();
   };
 
   const handleMillRevenueSuccess = () => {
@@ -176,20 +185,22 @@ const FeedModule: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Stock Matières Premières</h3>
           <div className="flex space-x-2">
-            <button
-              onClick={() => setShowEntryForm(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <ArrowDown className="h-4 w-4 mr-2" />
-              Entrée Stock
-            </button>
-            <button
-              onClick={() => setShowNewMaterialForm(true)}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter Article
-            </button>
+            <FeedManagerOnly>
+              <button
+                onClick={() => setShowEntryForm(true)}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <ArrowDown className="h-4 w-4 mr-2" />
+                Entrée Stock
+              </button>
+              <button
+                onClick={() => setShowNewMaterialForm(true)}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter Article
+              </button>
+            </FeedManagerOnly>
           </div>
         </div>
         
@@ -296,13 +307,15 @@ const FeedModule: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Historique des Entrées</h3>
-          <button
-            onClick={() => setShowEntryForm(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle Entrée
-          </button>
+          <FeedManagerOnly>
+            <button
+              onClick={() => setShowEntryForm(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle Entrée
+            </button>
+          </FeedManagerOnly>
         </div>
 
         <div className="overflow-x-auto">
@@ -350,7 +363,7 @@ const FeedModule: React.FC = () => {
           </table>
         </div>
 
-        {feedEntries.length === 0 && (
+        {feedEntries?.length === 0 && (
           <div className="text-center py-8">
             <ArrowDown className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">Aucune entrée enregistrée</p>
@@ -491,13 +504,15 @@ const FeedModule: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Ventes Externes d'Aliment</h3>
-          <button
-            onClick={() => setShowFeedSalesForm(true)}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle Vente
-          </button>
+          <FeedManagerOnly>
+            <button
+              onClick={() => setShowFeedSalesForm(true)}
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle Vente
+            </button>
+          </FeedManagerOnly>
         </div>
         
         <div className="overflow-x-auto">
@@ -513,14 +528,24 @@ const FeedModule: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {feedSales.map((sale) => (
+              {feedSalesLoading ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-gray-500">Chargement...</td>
+                </tr>
+              ) : (feedSales?.length === 0) ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-gray-500">Aucune vente enregistrée</td>
+                </tr>
+              ) : (feedSales || []).map((sale) => (
                 <tr key={sale.id} className="border-b border-gray-100">
-                  <td className="py-3 px-4 text-gray-600">{sale.date}</td>
-                  <td className="py-3 px-4 text-gray-800 font-medium">{sale.client}</td>
-                  <td className="py-3 px-4 text-gray-600">{sale.type}</td>
-                  <td className="py-3 px-4 text-gray-600">{sale.quantity} kg</td>
-                  <td className="py-3 px-4 text-gray-600">{sale.price} CFA/kg</td>
-                  <td className="py-3 px-4 text-green-600 font-medium">{sale.total.toLocaleString()} CFA</td>
+                  <td className="py-3 px-4 text-gray-600">
+                    {new Date(sale.date).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td className="py-3 px-4 text-gray-800 font-medium">{sale.client_name}</td>
+                  <td className="py-3 px-4 text-gray-600">{sale.feed_type}</td>
+                  <td className="py-3 px-4 text-gray-600">{sale.quantity_kg} kg</td>
+                  <td className="py-3 px-4 text-gray-600">{sale.unit_price.toLocaleString()} CFA/kg</td>
+                  <td className="py-3 px-4 text-green-600 font-medium">{sale.total_amount.toLocaleString()} CFA</td>
                 </tr>
               ))}
             </tbody>
@@ -664,13 +689,15 @@ const FeedModule: React.FC = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-800">Recettes du moulin</h3>
-                <button
-                  onClick={() => setShowMillRevenueForm(true)}
-                  className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle Recette
-                </button>
+                <FeedManagerOnly>
+                  <button
+                    onClick={() => setShowMillRevenueForm(true)}
+                    className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nouvelle Recette
+                  </button>
+                </FeedManagerOnly>
               </div>
 
               <div className="overflow-x-auto">
@@ -722,13 +749,15 @@ const FeedModule: React.FC = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-800">Recettes machine à provende</h3>
-                <button
-                  onClick={() => setShowMachineRevenueForm(true)}
-                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle Recette
-                </button>
+                <FeedManagerOnly>
+                  <button
+                    onClick={() => setShowMachineRevenueForm(true)}
+                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nouvelle Recette
+                  </button>
+                </FeedManagerOnly>
               </div>
 
               <div className="overflow-x-auto">

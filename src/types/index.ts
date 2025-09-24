@@ -8,7 +8,7 @@ export interface User {
   updated_at: string;
 }
 
-export type UserRole = 'admin' | 'employee' | 'feed_manager' | 'accountant' | 'cooperative_member';
+export type UserRole = 'superadmin' | 'farm_manager' | 'feed_manager' | 'accountant' | 'employee';
 
 export interface Farm {
   id: string;

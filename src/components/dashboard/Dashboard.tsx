@@ -7,12 +7,16 @@ import {
   AlertTriangle,
   Calendar,
   Bird,
-  Wheat
+  Wheat,
+  Users,
+  Shield
 } from 'lucide-react';
 import MetricCard from './MetricCard';
 import MetricHistory from './MetricHistory';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 const Dashboard: React.FC = () => {
+  const { userRole, getRoleDisplayName } = useRoleAccess();
   const [historyModal, setHistoryModal] = useState<{
     isOpen: boolean;
     metricType: 'production' | 'mortality' | 'feeding' | 'sales' | null;
@@ -56,14 +60,29 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Role-specific welcome */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          Tableau de Bord
-        </h1>
-        <p className="text-gray-600">
-          Vue d'ensemble de votre exploitation avicole et provenderie
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              Tableau de Bord - {getRoleDisplayName()}
+            </h1>
+            <p className="text-gray-600">
+              {userRole === 'superadmin' && 'Vue d\'ensemble complète de l\'exploitation avicole et provenderie'}
+              {userRole === 'farm_manager' && 'Gestion de votre exploitation avicole'}
+              {userRole === 'feed_manager' && 'Gestion de la provenderie et production d\'aliments'}
+              {userRole === 'accountant' && 'Suivi financier et ventes de l\'exploitation'}
+              {userRole === 'employee' && 'Vue d\'ensemble de vos tâches quotidiennes'}
+            </p>
+          </div>
+          <div className="p-3 bg-blue-100 rounded-lg">
+            {userRole === 'superadmin' && <Shield className="h-8 w-8 text-blue-600" />}
+            {userRole === 'farm_manager' && <Bird className="h-8 w-8 text-blue-600" />}
+            {userRole === 'feed_manager' && <Wheat className="h-8 w-8 text-blue-600" />}
+            {userRole === 'accountant' && <DollarSign className="h-8 w-8 text-blue-600" />}
+            {userRole === 'employee' && <Users className="h-8 w-8 text-blue-600" />}
+          </div>
+        </div>
       </div>
 
       {/* Key Metrics */}
